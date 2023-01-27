@@ -1,8 +1,11 @@
 use std::{
-    io::Read,
-    net::{TcpListener, TcpStream},
+    collections::HashMap,
+    net::TcpListener,
+    sync::{Arc, Mutex},
     thread,
 };
+
+use crate::{client::Client, protocol::Entry};
 
 mod client;
 mod protocol;
@@ -10,23 +13,18 @@ fn main() {
     let addr = "127.0.0.1:9889";
     let listener = TcpListener::bind(addr).expect("port 9889 in use");
     let mut thread_handlers = vec![];
+    let map: Arc<Mutex<HashMap<String, Entry>>> = Arc::new(Mutex::new(HashMap::new()));
     loop {
         match listener.accept() {
             Ok((socket, _)) => {
-                thread_handlers.push(thread::spawn(|| handle_client(socket)));
+                println!("client connected");
+                let k: Arc<Mutex<HashMap<String, Entry>>> = Arc::clone(&map);
+                thread_handlers.push(thread::spawn(|| {
+                    let mut client = Client::new(socket, k);
+                    client.handle_connection();
+                }));
             }
             Err(e) => println!("failed to connect to client {e}"),
-        }
-    }
-}
-
-fn handle_client(mut socket: TcpStream) {
-    loop {
-        let mut buf = [0u8; 100];
-        let n = socket.read(&mut buf).unwrap();
-        if n != 0 {
-        } else {
-            break;
         }
     }
 }
