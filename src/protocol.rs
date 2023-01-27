@@ -13,6 +13,8 @@ impl Entry {
 
 const STORE_COMMANDS: [&str; 5] = ["set", "add", "replace", "append", "prepend"];
 const RETRIEVE_COMMANDS: [&str; 2] = ["get", "gets"];
+const DELETE_COMMAND: &str = "delete";
+const FLUSH_COMMAND: &str = "flush_all";
 
 enum MessageType {
     Request(Request),
@@ -23,10 +25,46 @@ pub enum Request {
     Store(StoreRequest),
     Retreive(RetrieveRequest),
     FlushAll,
+    Delete(String),
+}
+
+impl Request {
+    fn from_str(s: &str) -> Self {
+        let cmd = &s[..s.find(" ").unwrap()];
+        if STORE_COMMANDS.contains(&cmd) {
+            return Request::Store(StoreRequest::from_str(s));
+        } else if RETRIEVE_COMMANDS.contains(&cmd) {
+            return Request::Retreive(RetrieveRequest::from_str(s));
+        } else if cmd == DELETE_COMMAND {
+            let req = s
+                .split(" ")
+                .filter(|e| !e.is_empty())
+                .map(|e| e.trim())
+                .collect::<Vec<&str>>();
+            if req.len() != 2 {
+                panic!("invalid cmd")
+            }
+            return Request::Delete(req[1].to_string());
+        } else if cmd == FLUSH_COMMAND {
+            todo!();
+        }
+
+        panic!();
+    }
 }
 pub enum Response {
     Store(StoreResponse),
     Retrieve(RetrieveResponse),
+    End,
+    Error,
+    ClientError,
+    ServerError,
+    // errors
+    // send not stored error from the error
+    // add to report that these things were implemented
+    InvalidKey,
+    CommandError,
+    ValueError,
 }
 
 #[derive(Debug)]
@@ -44,6 +82,66 @@ pub enum RetrieveRequest {
     Gets(String),
 }
 
+#[derive(Debug)]
+pub enum DeleteResponse {
+    Deleted,
+    NotFound,
+}
+
+impl StoreRequest {
+    fn get_cmd_from_str(s: &str) -> fn(Entry) -> StoreRequest {
+        let k = match s {
+            "set" => StoreRequest::Set,
+            "add" => StoreRequest::Add,
+            "replace" => StoreRequest::Replace,
+            "append" => StoreRequest::Append,
+            "prepend" => StoreRequest::Prepend,
+            _ => panic!("invalid"),
+        };
+        return k;
+    }
+    fn from_str(s: &str) -> StoreRequest {
+        let idx = s.find("\r\n").unwrap();
+        let cmd = &s[..idx]
+            .split(" ")
+            .filter(|e| !e.is_empty())
+            .map(|e| e.trim())
+            .collect::<Vec<&str>>();
+        let value = &s[idx + 2..];
+        if cmd.len() != 3 {
+            panic!("invalid request");
+        }
+        let (cmd, key, size) = (cmd[0], cmd[1], cmd[2]);
+        let request = Self::get_cmd_from_str(cmd);
+        let size = size.parse::<u32>().unwrap();
+        let value = value[..size as usize].to_string();
+        let entry = Entry::new(key.to_string(), value, size);
+        return request(entry);
+    }
+}
+
+impl RetrieveRequest {
+    fn get_cmd_from_str(s: &str) -> fn(String) -> RetrieveRequest {
+        let k = match s {
+            "get" => RetrieveRequest::Get,
+            "gets" => RetrieveRequest::Gets,
+            _ => panic!("invalid"),
+        };
+        return k;
+    }
+    fn from_str(s: &str) -> RetrieveRequest {
+        let request = s
+            .split(" ")
+            .filter(|e| !e.is_empty())
+            .map(|e| e.trim())
+            .collect::<Vec<&str>>();
+        if request.len() != 2 {
+            panic!("InvalidRequest")
+        }
+        return Self::get_cmd_from_str(request[0])(request[1].to_string());
+    }
+}
+
 pub enum StoreResponse {
     Stored,
     NotStored,
@@ -51,7 +149,6 @@ pub enum StoreResponse {
     NotFound,
 }
 pub enum RetrieveResponse {
-    End,
     Value(Entry),
 }
 
@@ -75,62 +172,15 @@ impl<'a> Deserializer<'a> {
             input: input.trim_matches(|v| v == ' '),
         }
     }
-    pub fn split_request(&mut self) -> (&str, &str) {
-        if let Some(idx) = self.input.find("\r\n") {
-            let req = &self.input[..idx];
-            self.input = &self.input[idx + 2..];
-            return (req, self.input);
-        } else {
-            panic!("invalid request");
-        }
-    }
 
     pub fn deserialize(&mut self) -> Request {
-        let (r, v) = self.split_request();
-        let req = r
-            .split(" ")
-            .filter(|v| !v.is_empty())
-            .collect::<Vec<&str>>();
-        println!("req: {:?}", req);
-        if req.len() < 2 {
-            panic!("invalid request");
-        }
-        let cmd = req[0];
+        let cmd = &self.input[..self.input.find(" ").unwrap()];
         if STORE_COMMANDS.contains(&cmd) {
-            if req.len() < 3 {
-                panic!("not enough arguments");
-            }
-            let entry = {
-                let key = req[1];
-                let size = req[2].parse::<u32>().unwrap();
-                let last = v.get(size as usize..size as usize + 2).unwrap();
-                if last != "\r\n" {
-                    panic!("invalid value");
-                }
-                let value = v.get(0..size as usize).unwrap();
-                Entry::new(String::from(key), String::from(value), size)
-            };
-            println!("entry: {:?}", entry);
-            let req = match cmd {
-                "set" => StoreRequest::Set(entry),
-                "add" => StoreRequest::Add(entry),
-                "replace" => StoreRequest::Replace(entry),
-                "append" => StoreRequest::Append(entry),
-                "prepend" => StoreRequest::Prepend(entry),
-                _ => panic!(),
-            };
-            return Request::Store(req);
+            return Request::Store(StoreRequest::from_str(self.input));
         } else if RETRIEVE_COMMANDS.contains(&cmd) {
-            if req.len() < 2 {
-                panic!("not enough arguments");
-            }
-            let key = String::from(req[1]);
-            let req = match cmd {
-                "get" => RetrieveRequest::Get(key),
-                "gets" => RetrieveRequest::Gets(key),
-                _ => panic!(),
-            };
-            return Request::Retreive(req);
+            return Request::Retreive(RetrieveRequest::from_str(self.input));
+        } else if cmd == DELETE_COMMAND {
+        } else if cmd == FLUSH_COMMAND {
         };
         panic!("invalid command");
     }

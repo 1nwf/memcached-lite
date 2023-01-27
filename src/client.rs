@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 use std::{
     collections::HashMap,
-    io::{Read, Result},
+    io::Read,
     net::TcpStream,
     sync::{Arc, Mutex, MutexGuard},
 };
@@ -21,8 +21,14 @@ impl Client {
         Self { socket, store }
     }
 
-    pub fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
-        self.socket.read(buf)
+    pub fn read<'a>(&mut self, buf: &'a mut [u8]) -> Option<&'a str> {
+        let n = self.socket.read(buf).unwrap();
+        if n == 0 {
+            return None;
+        }
+
+        let decoded_str = std::str::from_utf8(&buf[..n]).unwrap();
+        return Some(decoded_str);
     }
 
     fn get_store(&self) -> MutexGuard<HashMap<String, Entry>> {
@@ -74,12 +80,8 @@ impl Client {
     }
 
     pub fn handle_connection(&mut self) {
-        let mut buf = [0_u8; 512];
-        let n = self.read(&mut buf).unwrap();
-        if n == 0 {
-            return;
-        }
-        let input = std::str::from_utf8(&buf[..n]).unwrap();
+        let mut buf = [0u8; 512];
+        let input = self.read(&mut buf).unwrap();
         let mut d = Deserializer::from_string(input);
         let request = d.deserialize();
         println!("request: {:?}", request);
@@ -90,6 +92,7 @@ impl Client {
             Request::Store(req) => Response::Store(self.handle_store(req)),
             Request::Retreive(req) => Response::Retrieve(self.handle_retrieve(req)),
             Request::FlushAll => self.handle_flush_all(),
+            Request::Delete(_key) => todo!(),
         }
     }
 
@@ -101,7 +104,7 @@ impl Client {
             StoreRequest::Append(e) => self.append(e),
             StoreRequest::Prepend(e) => self.prepend(e),
         };
-        println!("store: {:?}", self.store);
+        println!("store: {:?}", self.get_store());
         return StoreResponse::Stored;
     }
     fn handle_retrieve(&self, req: RetrieveRequest) -> RetrieveResponse {
@@ -116,6 +119,10 @@ impl Client {
     }
     fn handle_flush_all(&mut self) -> Response {
         self.get_store().clear();
-        return Response::Retrieve(RetrieveResponse::End);
+        return Response::End;
+    }
+
+    fn handle_delete(&mut self) {
+        todo!()
     }
 }
