@@ -13,6 +13,7 @@ impl Entry {
 
 const STORE_COMMANDS: [&str; 5] = ["set", "add", "replace", "append", "prepend"];
 const RETRIEVE_COMMANDS: [&str; 2] = ["get", "gets"];
+
 enum MessageType {
     Request(Request),
     Response(Response),
@@ -86,7 +87,11 @@ impl<'a> Deserializer<'a> {
 
     pub fn deserialize(&mut self) -> Request {
         let (r, v) = self.split_request();
-        let req = r.split(" ").collect::<Vec<&str>>();
+        let req = r
+            .split(" ")
+            .filter(|v| !v.is_empty())
+            .collect::<Vec<&str>>();
+        println!("req: {:?}", req);
         if req.len() < 2 {
             panic!("invalid request");
         }
