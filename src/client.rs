@@ -7,8 +7,7 @@ use std::{
 };
 
 use crate::protocol::{
-    Deserializer, Entry, Request, Response, RetrieveRequest, RetrieveResponse, StoreRequest,
-    StoreResponse,
+    Entry, Request, Response, RetrieveRequest, RetrieveResponse, StoreRequest, StoreResponse,
 };
 
 pub struct Client {
@@ -82,8 +81,7 @@ impl Client {
     pub fn handle_connection(&mut self) {
         let mut buf = [0u8; 512];
         let input = self.read(&mut buf).unwrap();
-        let mut d = Deserializer::from_string(input);
-        let request = d.deserialize();
+        let request = Request::from_str(input);
         println!("request: {:?}", request);
         self.handle_request(request);
     }
@@ -92,7 +90,7 @@ impl Client {
             Request::Store(req) => Response::Store(self.handle_store(req)),
             Request::Retreive(req) => Response::Retrieve(self.handle_retrieve(req)),
             Request::FlushAll => self.handle_flush_all(),
-            Request::Delete(_key) => todo!(),
+            Request::Delete(key) => self.handle_delete(key),
         }
     }
 
@@ -122,7 +120,9 @@ impl Client {
         return Response::End;
     }
 
-    fn handle_delete(&mut self) {
-        todo!()
+    fn handle_delete(&mut self, key: String) -> Response {
+        let mut store = self.get_store();
+        store.remove(&key).unwrap();
+        return Response::End;
     }
 }

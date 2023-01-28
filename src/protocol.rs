@@ -29,27 +29,36 @@ pub enum Request {
 }
 
 impl Request {
-    fn from_str(s: &str) -> Self {
-        let cmd = &s[..s.find(" ").unwrap()];
-        if STORE_COMMANDS.contains(&cmd) {
-            return Request::Store(StoreRequest::from_str(s));
-        } else if RETRIEVE_COMMANDS.contains(&cmd) {
-            return Request::Retreive(RetrieveRequest::from_str(s));
-        } else if cmd == DELETE_COMMAND {
-            let req = s
-                .split(" ")
-                .filter(|e| !e.is_empty())
-                .map(|e| e.trim())
-                .collect::<Vec<&str>>();
-            if req.len() != 2 {
-                panic!("invalid cmd")
+    pub fn from_str(s: &str) -> Self {
+        let idx = s.find(" ");
+        if let Some(idx) = idx {
+            let cmd = &s[..idx];
+            if STORE_COMMANDS.contains(&cmd) {
+                return Request::Store(StoreRequest::from_str(s));
+            } else if RETRIEVE_COMMANDS.contains(&cmd) {
+                return Request::Retreive(RetrieveRequest::from_str(s));
+            } else if cmd == DELETE_COMMAND {
+                let req = s
+                    .split(" ")
+                    .filter(|e| !e.is_empty())
+                    .collect::<Vec<&str>>();
+                if req.len() != 2 {
+                    panic!("invalid cmd")
+                }
+                return Request::Delete(req[1].to_string());
             }
-            return Request::Delete(req[1].to_string());
-        } else if cmd == FLUSH_COMMAND {
-            todo!();
+        }
+        let cmd = s
+            .split(' ')
+            .filter(|e| !e.is_empty())
+            .collect::<Vec<&str>>();
+        if cmd.len() <= 2 && cmd[0] == FLUSH_COMMAND && cmd[1] == "\r\n"
+            || cmd[0] == (FLUSH_COMMAND.to_owned() + "\r\n")
+        {
+            return Request::FlushAll;
         }
 
-        panic!();
+        panic!("invalid command");
     }
 }
 pub enum Response {
@@ -150,38 +159,4 @@ pub enum StoreResponse {
 }
 pub enum RetrieveResponse {
     Value(Entry),
-}
-
-pub struct Message {
-    msg: MessageType,
-}
-
-impl Message {
-    fn new() -> Self {
-        todo!();
-    }
-}
-
-pub struct Deserializer<'a> {
-    pub input: &'a str,
-}
-
-impl<'a> Deserializer<'a> {
-    pub fn from_string(input: &'a str) -> Self {
-        Self {
-            input: input.trim_matches(|v| v == ' '),
-        }
-    }
-
-    pub fn deserialize(&mut self) -> Request {
-        let cmd = &self.input[..self.input.find(" ").unwrap()];
-        if STORE_COMMANDS.contains(&cmd) {
-            return Request::Store(StoreRequest::from_str(self.input));
-        } else if RETRIEVE_COMMANDS.contains(&cmd) {
-            return Request::Retreive(RetrieveRequest::from_str(self.input));
-        } else if cmd == DELETE_COMMAND {
-        } else if cmd == FLUSH_COMMAND {
-        };
-        panic!("invalid command");
-    }
 }
