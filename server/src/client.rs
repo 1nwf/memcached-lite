@@ -1,14 +1,12 @@
 #![allow(dead_code)]
 use std::{
     collections::HashMap,
-    io::Read,
+    io::{Read, Write},
     net::TcpStream,
     sync::{Arc, Mutex, MutexGuard},
 };
 
-use parser::{
-    Entry, Request, Response, RetrieveRequest, RetrieveResponse, StoreRequest, StoreResponse,
-};
+use parser::{Entry, Request, Response, RetrieveRequest, StoreRequest, StoreResponse};
 
 pub struct Client {
     socket: TcpStream,
@@ -83,12 +81,13 @@ impl Client {
         let input = self.read(&mut buf).unwrap();
         let request = Request::from_str(input);
         println!("request: {:?}", request);
-        self.handle_request(request);
+        let response = self.handle_request(request);
+        self.socket.write(response.to_string().as_bytes()).unwrap();
     }
     fn handle_request(&mut self, request: Request) -> Response {
         match request {
             Request::Store(req) => Response::Store(self.handle_store(req)),
-            Request::Retreive(req) => Response::Retrieve(self.handle_retrieve(req)),
+            Request::Retreive(req) => self.handle_retrieve(req),
             Request::FlushAll => self.handle_flush_all(),
             Request::Delete(key) => self.handle_delete(key),
         }
@@ -105,12 +104,12 @@ impl Client {
         println!("store: {:?}", self.get_store());
         return StoreResponse::Stored;
     }
-    fn handle_retrieve(&self, req: RetrieveRequest) -> RetrieveResponse {
+    fn handle_retrieve(&self, req: RetrieveRequest) -> Response {
         match req {
             RetrieveRequest::Get(key) => {
                 let value = self.get(&key);
                 println!("value: {:?}", value);
-                RetrieveResponse::Value(value)
+                Response::Retrieve(value)
             }
             RetrieveRequest::Gets(_) => todo!(),
         }
