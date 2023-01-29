@@ -4,7 +4,7 @@ mod response;
 pub use request::*;
 pub use response::*;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Entry {
     pub key: String,
     pub value: String,
@@ -33,6 +33,18 @@ impl Entry {
         let size = size.parse::<u32>().unwrap();
         let value = value[..size as usize].to_string();
         return Entry::new(key.to_string(), value, size);
+    }
+
+    pub fn append(&mut self, e: &Entry) {
+        self.value += &e.value;
+        self.len += e.len;
+    }
+    pub fn prepend(&mut self, e: &Entry) {
+        self.value = format!("{}{}", e.value, self.value);
+        self.len += e.len;
+    }
+    pub fn replace(&mut self, e: &Entry) {
+        _ = std::mem::replace(self, e.clone());
     }
 }
 
