@@ -5,29 +5,26 @@ use std::{
     net::TcpStream,
 };
 
-pub struct Client<'a> {
-    addr: &'a str,
+pub struct Client {
+    conn: TcpStream,
 }
 
-impl<'a> Client<'a> {
-    pub fn new(addr: &'a str) -> Self {
-        Self { addr }
+impl Client {
+    pub fn new(addr: &str) -> Self {
+        let conn = TcpStream::connect(addr).expect("unable to connect to server");
+        Self { conn }
     }
 
-    fn connect(&self) -> TcpStream {
-        return TcpStream::connect(self.addr.clone()).unwrap();
-    }
     fn send(&mut self, request: Request) -> Response {
-        let mut stream = self.connect();
-        stream.write(request.to_string().as_bytes()).unwrap();
-        return self.read(stream);
+        self.conn.write(request.to_string().as_bytes()).unwrap();
+        return self.read();
     }
     fn store(&mut self, store_req: StoreRequest) -> Response {
         self.send(Request::Store(store_req))
     }
-    fn read(&mut self, mut stream: TcpStream) -> Response {
+    fn read(&mut self) -> Response {
         let mut buf = [0u8; 512];
-        let n = stream.read(&mut buf).unwrap();
+        let n = self.conn.read(&mut buf).unwrap();
         if n == 0 {
             panic!();
         }
@@ -69,10 +66,7 @@ impl<'a> Client<'a> {
 
 #[cfg(test)]
 mod tests {
-    use std::sync::Mutex;
-
     use super::*;
-    static lock: Mutex<()> = Mutex::new(());
 
     #[test]
     fn set_get() {

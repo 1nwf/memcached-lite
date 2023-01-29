@@ -77,12 +77,17 @@ impl Client {
     }
 
     pub fn handle_connection(&mut self) {
-        let mut buf = [0u8; 512];
-        let input = self.read(&mut buf).unwrap();
-        let request = Request::from_str(input);
-        println!("request: {:?}", request);
-        let response = self.handle_request(request);
-        self.socket.write(response.to_string().as_bytes()).unwrap();
+        loop {
+            let mut buf = [0u8; 512];
+            if let Some(input) = self.read(&mut buf) {
+                let request = Request::from_str(input);
+                println!("request: {:?}", request);
+                let response = self.handle_request(request);
+                self.socket.write(response.to_string().as_bytes()).unwrap();
+            } else {
+                return;
+            }
+        }
     }
     fn handle_request(&mut self, request: Request) -> Response {
         match request {
