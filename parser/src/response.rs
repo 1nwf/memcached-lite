@@ -41,6 +41,7 @@ impl Response {
             }
         } else {
             let idx = s.find(" ").unwrap();
+            println!("resopnse: {}", s);
             if !(&s[..idx] == "VALUE") {
                 panic!("invalid response");
             }
@@ -51,7 +52,7 @@ impl Response {
     pub fn to_string(&self) -> String {
         match self {
             Response::Store(s) => s.to_string(),
-            Response::Retrieve(e) => e.to_string(),
+            Response::Retrieve(e) => format!("VALUE {}", e.to_string()),
             Response::End => format!("END\r\n"),
             Response::Error => format!("ERROR\r\n"),
             Response::ClientError => format!("CLIENT_ERROR\r\n"),
