@@ -18,6 +18,22 @@ impl Entry {
         let Self { key, value, len } = self;
         return format!("{} {}\r\n{}\r\n", key, len, value);
     }
+    pub fn from_string(s: &str) -> Self {
+        let idx = s.find("\r\n").unwrap();
+        let v = &s[..idx]
+            .split(" ")
+            .filter(|e| !e.is_empty())
+            .map(|e| e.trim())
+            .collect::<Vec<&str>>();
+        if v.len() != 2 {
+            panic!("invalid entry");
+        }
+        let value = &s[idx + 2..];
+        let (key, size) = (v[0], v[1]);
+        let size = size.parse::<u32>().unwrap();
+        let value = value[..size as usize].to_string();
+        return Entry::new(key.to_string(), value, size);
+    }
 }
 
 #[cfg(test)]

@@ -82,21 +82,11 @@ impl StoreRequest {
         return k;
     }
     fn from_str(s: &str) -> StoreRequest {
-        let idx = s.find("\r\n").unwrap();
-        let cmd = &s[..idx]
-            .split(" ")
-            .filter(|e| !e.is_empty())
-            .map(|e| e.trim())
-            .collect::<Vec<&str>>();
-        let value = &s[idx + 2..];
-        if cmd.len() != 3 {
-            panic!("invalid request");
-        }
-        let (cmd, key, size) = (cmd[0], cmd[1], cmd[2]);
+        let idx = s.find(" ").unwrap();
+        let cmd = &s[..idx];
+        let entry_string = &s[idx + 1..];
         let request = Self::get_cmd_from_str(cmd);
-        let size = size.parse::<u32>().unwrap();
-        let value = value[..size as usize].to_string();
-        let entry = Entry::new(key.to_string(), value, size);
+        let entry = Entry::from_string(entry_string);
         return request(entry);
     }
     fn to_string(&self) -> String {
