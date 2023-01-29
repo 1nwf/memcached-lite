@@ -44,6 +44,14 @@ impl Request {
 
         panic!("invalid command");
     }
+    pub fn to_string(&self) -> String {
+        match self {
+            Request::Store(s) => s.to_string(),
+            Request::Retreive(r) => r.to_string(),
+            Request::FlushAll => "flush_all\r\n".into(),
+            Request::Delete(key) => format!("delete {}\r\n", key),
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -91,6 +99,15 @@ impl StoreRequest {
         let entry = Entry::new(key.to_string(), value, size);
         return request(entry);
     }
+    fn to_string(&self) -> String {
+        match self {
+            StoreRequest::Set(e) => format!("set {}", e.to_string()),
+            StoreRequest::Add(e) => format!("add {}", e.to_string()),
+            StoreRequest::Replace(e) => format!("replace {}", e.to_string()),
+            StoreRequest::Append(e) => format!("append {}", e.to_string()),
+            StoreRequest::Prepend(e) => format!("prepend {}", e.to_string()),
+        }
+    }
 }
 
 impl RetrieveRequest {
@@ -112,5 +129,11 @@ impl RetrieveRequest {
             panic!("InvalidRequest")
         }
         return Self::get_cmd_from_str(request[0])(request[1].to_string());
+    }
+    fn to_string(&self) -> String {
+        match self {
+            RetrieveRequest::Get(key) => format!("get {}\r\n", key),
+            RetrieveRequest::Gets(_) => todo!(),
+        }
     }
 }

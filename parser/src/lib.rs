@@ -11,8 +11,12 @@ pub struct Entry {
     pub len: u32,
 }
 impl Entry {
-    fn new(key: String, value: String, len: u32) -> Self {
+    pub fn new(key: String, value: String, len: u32) -> Self {
         Self { key, value, len }
+    }
+    pub fn to_string(&self) -> String {
+        let Self { key, value, len } = self;
+        return format!("{} {}\r\n{}\r\n", key, len, value);
     }
 }
 
