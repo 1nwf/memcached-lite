@@ -5,8 +5,6 @@ use std::{
     net::TcpStream,
 };
 
-mod message;
-
 pub struct Client<'a> {
     addr: &'a str,
 }
@@ -33,7 +31,8 @@ impl<'a> Client<'a> {
         if n == 0 {
             panic!();
         }
-        return Response::from_string(std::str::from_utf8(&buf[..n]).unwrap());
+        let response_str = std::str::from_utf8(&buf[..n]).unwrap();
+        return Response::from_string(response_str);
     }
     pub fn get(&mut self, key: String) -> Entry {
         let cmd = RetrieveRequest::Get(key);
@@ -62,21 +61,68 @@ impl<'a> Client<'a> {
     pub fn flush_all(&mut self) -> Response {
         self.send(Request::FlushAll)
     }
+    pub fn replace(&mut self, entry: Entry) -> Response {
+        let cmd = StoreRequest::Replace(entry);
+        self.store(cmd)
+    }
 }
 
 #[cfg(test)]
 mod tests {
+    use std::sync::Mutex;
+
     use super::*;
+    static lock: Mutex<()> = Mutex::new(());
 
     #[test]
-    fn it_works() {
+    fn set_get() {
         let mut client = Client::new("localhost:9889");
-        let e = Entry::new("hello".into(), "value".into(), 5);
+        let key = "hello".to_string();
+        let value = "hello".to_string();
+        let len = value.len() as u32;
+
+        let e = Entry::new(key.clone(), value.clone(), len);
         let res = client.set(e);
-        println!("res: {:?}", res);
-        let e2 = Entry::new("hello".into(), " world".into(), 6);
+        assert_eq!(res, Response::Store(parser::StoreResponse::Stored));
+
+        let e2 = Entry::new(key.clone(), " world".into(), 6);
         let res = client.append(e2);
-        println!("res: {:?}", res);
-        // client.get("hello".into());
+
+        assert_eq!(res, Response::Store(parser::StoreResponse::Stored));
+
+        let entry = client.get(key.clone());
+        assert_eq!(entry, Entry::new("hello".into(), "hello world".into(), 11));
     }
+
+    #[test]
+    fn append() {}
+
+    #[test]
+    fn prepend() {}
+
+    #[test]
+    fn replace() {
+        let mut client = Client::new("localhost:9889");
+        let key = "key1".to_string();
+        let value = "value1".to_string();
+        let len: u32 = value.len() as u32;
+        let entry = Entry::new(key.clone(), value, len);
+
+        client.set(entry.clone());
+
+        let res = client.get(key.clone());
+        assert_eq!(res, entry);
+
+        let new_entry = Entry::new(key.clone(), "value replaced".into(), 14);
+        client.replace(new_entry.clone());
+
+        let res = client.get(key);
+        assert_eq!(res, new_entry);
+    }
+
+    #[test]
+    fn delete() {}
+
+    #[test]
+    fn flush_all() {}
 }
