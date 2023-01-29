@@ -6,7 +6,7 @@ use std::{
     sync::{Arc, Mutex, MutexGuard},
 };
 
-use crate::protocol::{
+use parser::{
     Entry, Request, Response, RetrieveRequest, RetrieveResponse, StoreRequest, StoreResponse,
 };
 

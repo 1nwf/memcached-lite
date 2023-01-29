@@ -5,10 +5,10 @@ use std::{
     thread,
 };
 
-use crate::{client::Client, protocol::Entry};
+use crate::client::Client;
+use parser::Entry;
 
 mod client;
-mod protocol;
 fn main() {
     let addr = "127.0.0.1:9889";
     let listener = TcpListener::bind(addr).expect("port 9889 in use");

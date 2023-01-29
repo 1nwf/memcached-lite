@@ -1,25 +1,9 @@
-#![allow(dead_code)]
-#[derive(Debug, Clone)]
-pub struct Entry {
-    pub key: String,
-    pub value: String,
-    pub len: u32,
-}
-impl Entry {
-    fn new(key: String, value: String, len: u32) -> Self {
-        Self { key, value, len }
-    }
-}
-
+use crate::Entry;
 const STORE_COMMANDS: [&str; 5] = ["set", "add", "replace", "append", "prepend"];
 const RETRIEVE_COMMANDS: [&str; 2] = ["get", "gets"];
 const DELETE_COMMAND: &str = "delete";
 const FLUSH_COMMAND: &str = "flush_all";
 
-enum MessageType {
-    Request(Request),
-    Response(Response),
-}
 #[derive(Debug)]
 pub enum Request {
     Store(StoreRequest),
@@ -61,20 +45,6 @@ impl Request {
         panic!("invalid command");
     }
 }
-pub enum Response {
-    Store(StoreResponse),
-    Retrieve(RetrieveResponse),
-    End,
-    Error,
-    ClientError,
-    ServerError,
-    // errors
-    // send not stored error from the error
-    // add to report that these things were implemented
-    InvalidKey,
-    CommandError,
-    ValueError,
-}
 
 #[derive(Debug)]
 pub enum StoreRequest {
@@ -89,12 +59,6 @@ pub enum StoreRequest {
 pub enum RetrieveRequest {
     Get(String),
     Gets(String),
-}
-
-#[derive(Debug)]
-pub enum DeleteResponse {
-    Deleted,
-    NotFound,
 }
 
 impl StoreRequest {
@@ -149,14 +113,4 @@ impl RetrieveRequest {
         }
         return Self::get_cmd_from_str(request[0])(request[1].to_string());
     }
-}
-
-pub enum StoreResponse {
-    Stored,
-    NotStored,
-    Exists,
-    NotFound,
-}
-pub enum RetrieveResponse {
-    Value(Entry),
 }

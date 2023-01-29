@@ -7,5 +7,12 @@ name = "client"
 version = "0.1.0"
 
 [[package]]
-name = "memcached-lite"
+name = "parser"
 version = "0.1.0"
+
+[[package]]
+name = "server"
+version = "0.1.0"
+dependencies = [
+ "parser",
+]
