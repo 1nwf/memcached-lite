@@ -52,28 +52,28 @@ impl Client {
 
     pub fn replace(&mut self, data: Entry) {
         self.update_value(&data.key, |e: &mut Entry| {
-            e.value = data.value;
-            e.len = data.len
+            e.replace(&data);
         });
     }
 
     pub fn append(&mut self, data: Entry) {
         self.update_value(&data.key, |e: &mut Entry| {
-            e.value += &data.value;
-            e.len += data.len;
+            e.append(&data);
         });
     }
     pub fn prepend(&mut self, data: Entry) {
         self.update_value(&data.key, |e: &mut Entry| {
-            e.value = data.value + &e.value;
-            e.len += data.len;
+            e.prepend(&data);
         });
     }
 
-    pub fn get(&self, key: &String) -> Entry {
+    pub fn get(&self, key: &String) -> Option<Entry> {
         let lock = self.get_store();
-        let value = lock.get(key).unwrap();
-        return value.clone();
+        let value = lock.get(key);
+        if let Some(entry) = value {
+            return Some(entry.clone());
+        }
+        return None;
     }
 
     pub fn handle_connection(&mut self) {
@@ -107,9 +107,11 @@ impl Client {
     fn handle_retrieve(&self, req: RetrieveRequest) -> Response {
         match req {
             RetrieveRequest::Get(key) => {
-                let value = self.get(&key);
-                println!("value: {:?}", value);
-                Response::Retrieve(value)
+                if let Some(value) = self.get(&key) {
+                    Response::Retrieve(value)
+                } else {
+                    Response::Error
+                }
             }
             RetrieveRequest::Gets(_) => todo!(),
         }
