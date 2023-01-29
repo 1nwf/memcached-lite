@@ -1,5 +1,5 @@
 use crate::Entry;
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum Response {
     Store(StoreResponse),
     Retrieve(Entry),
@@ -15,12 +15,12 @@ pub enum Response {
     ValueError,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum DeleteResponse {
     Deleted,
     NotFound,
 }
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum StoreResponse {
     Stored,
     NotStored,
