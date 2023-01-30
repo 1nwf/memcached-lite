@@ -86,16 +86,16 @@ impl StoreRequest {
         let cmd = &s[..idx];
         let entry_string = &s[idx + 1..];
         let request = Self::get_cmd_from_str(cmd);
-        let entry = Entry::from_string(entry_string);
+        let entry = Entry::from_req_str(entry_string);
         return request(entry);
     }
     fn to_string(&self) -> String {
         match self {
-            StoreRequest::Set(e) => format!("set {}", e.to_string()),
-            StoreRequest::Add(e) => format!("add {}", e.to_string()),
-            StoreRequest::Replace(e) => format!("replace {}", e.to_string()),
-            StoreRequest::Append(e) => format!("append {}", e.to_string()),
-            StoreRequest::Prepend(e) => format!("prepend {}", e.to_string()),
+            StoreRequest::Set(e) => format!("set {}", e.to_req_str()),
+            StoreRequest::Add(e) => format!("add {}", e.to_req_str()),
+            StoreRequest::Replace(e) => format!("replace {}", e.to_req_str()),
+            StoreRequest::Append(e) => format!("append {}", e.to_req_str()),
+            StoreRequest::Prepend(e) => format!("prepend {}", e.to_req_str()),
         }
     }
 }

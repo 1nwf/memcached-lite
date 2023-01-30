@@ -30,6 +30,7 @@ pub enum StoreResponse {
 
 impl Response {
     pub fn from_string(s: &str) -> Self {
+        println!("res: {:?}", s);
         if s.split(" ").collect::<Vec<&str>>().len() == 1 {
             assert!(&s[s.len() - 2..] == "\r\n");
             match &s[..s.len() - 2] {
@@ -41,18 +42,17 @@ impl Response {
             }
         } else {
             let idx = s.find(" ").unwrap();
-            println!("resopnse: {}", s);
             if !(&s[..idx] == "VALUE") {
                 panic!("invalid response");
             }
-            return Self::Retrieve(Entry::from_string(&s[idx + 1..]));
+            return Self::Retrieve(Entry::from_res_str(&s[idx + 1..]));
         }
     }
 
     pub fn to_string(&self) -> String {
-        match self {
+        let s = match self {
             Response::Store(s) => s.to_string(),
-            Response::Retrieve(e) => format!("VALUE {}", e.to_string()),
+            Response::Retrieve(e) => format!("VALUE {}", e.to_res_str()),
             Response::End => format!("END\r\n"),
             Response::Error => format!("ERROR\r\n"),
             Response::ClientError => format!("CLIENT_ERROR\r\n"),
@@ -61,7 +61,11 @@ impl Response {
             // Response::InvalidKey => format!(:),
             // Response::CommandError => todo!(),
             // Response::ValueError => todo!(),
+        };
+        if *self != Response::End {
+            return format!("{}END\r\n", s);
         }
+        return s;
     }
 }
 

@@ -7,32 +7,92 @@ pub use response::*;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Entry {
     pub key: String,
-    pub value: String,
+    pub flags: u32,
+    pub exptime: u32, // can't be longer than 60*60*24*30 seconds (30 days)
     pub len: u32,
+    pub value: String,
 }
 impl Entry {
-    pub fn new(key: String, value: String, len: u32) -> Self {
-        Self { key, value, len }
+    pub fn new(key: String, flags: u32, exptime: u32, value: String, len: u32) -> Self {
+        Self {
+            key,
+            flags,
+            exptime,
+            len,
+            value,
+        }
     }
-    pub fn to_string(&self) -> String {
-        let Self { key, value, len } = self;
-        return format!("{} {}\r\n{}\r\n", key, len, value);
+    pub fn default_new(key: String, value: String, len: u32) -> Self {
+        Self {
+            key,
+            flags: 0,
+            exptime: 0,
+            len,
+            value,
+        }
     }
-    pub fn from_string(s: &str) -> Self {
+    pub fn to_string(&self, exp: bool) -> String {
+        let Self {
+            key,
+            flags,
+            exptime,
+            value,
+            len,
+        } = self;
+        let mut s = format!("{} {}", key, flags);
+        if exp {
+            s = format!("{} {}", s, exptime);
+        }
+        return format!("{} {}\r\n{}\r\n", s, len, value);
+    }
+    pub fn to_req_str(&self) -> String {
+        return self.to_string(true);
+    }
+
+    pub fn to_res_str(&self) -> String {
+        return self.to_string(false);
+    }
+
+    pub fn from_res_str(s: &str) -> Self {
+        return Self::from_string(s, false);
+    }
+
+    pub fn from_req_str(s: &str) -> Self {
+        return Self::from_string(s, true);
+    }
+    pub fn from_string(s: &str, exp: bool) -> Self {
         let idx = s.find("\r\n").unwrap();
         let v = &s[..idx]
             .split(" ")
             .filter(|e| !e.is_empty())
             .map(|e| e.trim())
             .collect::<Vec<&str>>();
-        if v.len() != 2 {
+        if (exp && v.len() != 4) || (!exp && v.len() != 3) {
             panic!("invalid entry");
         }
+
         let value = &s[idx + 2..];
-        let (key, size) = (v[0], v[1]);
-        let size = size.parse::<u32>().unwrap();
-        let value = value[..size as usize].to_string();
-        return Entry::new(key.to_string(), value, size);
+        if exp {
+            let (key, flags, exptime, size) = (v[0], v[1], v[2], v[3]);
+            let flags = flags.parse::<u32>().unwrap();
+            let exptime = exptime.parse::<u32>().unwrap();
+            let size = size.parse::<u32>().unwrap();
+            let value = value[..size as usize].to_string();
+            return Entry::new(key.to_string(), flags, exptime, value, size);
+        } else {
+            let (key, flags, size) = (v[0], v[1], v[2]);
+            let flags = flags.parse::<u32>().unwrap();
+            let size = size.parse::<u32>().unwrap();
+            let value = value[..size as usize].to_string();
+            return Entry::new(key.to_string(), flags, 0, value, size);
+        }
+
+        // let (key, flags, exptime, size) = (v[0], v[1], v[2], v[3]);
+        // let flags = flags.parse::<u32>().unwrap();
+        // let exptime = exptime.parse::<u32>().unwrap();
+        // let size = size.parse::<u32>().unwrap();
+        // let value = value[..size as usize].to_string();
+        // return Entry::new(key.to_string(), flags, exptime, value, size);
     }
 
     pub fn append(&mut self, e: &Entry) {
