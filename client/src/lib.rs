@@ -24,11 +24,17 @@ impl Client {
     }
     fn read(&mut self) -> Response {
         let mut buf = [0u8; 512];
-        let n = self.conn.read(&mut buf).unwrap();
-        if n == 0 {
-            panic!();
+        let mut n;
+        loop {
+            let n_read = self.conn.read(&mut buf).unwrap();
+            if n_read == 0 {
+                panic!("");
+            } else if &buf[n_read - 5..n_read] == Response::End.to_string().as_bytes() {
+                n = n_read;
+                break;
+            }
         }
-        let response_str = std::str::from_utf8(&buf[..n]).unwrap();
+        let response_str = std::str::from_utf8(&buf[..n - 5]).unwrap();
         return Response::from_string(response_str);
     }
     pub fn get(&mut self, key: String) -> Entry {
@@ -75,17 +81,20 @@ mod tests {
         let value = "hello".to_string();
         let len = value.len() as u32;
 
-        let e = Entry::new(key.clone(), value.clone(), len);
+        let e = Entry::default_new(key.clone(), value.clone(), len);
         let res = client.set(e);
         assert_eq!(res, Response::Store(parser::StoreResponse::Stored));
 
-        let e2 = Entry::new(key.clone(), " world".into(), 6);
+        let e2 = Entry::default_new(key.clone(), " world".into(), 6);
         let res = client.append(e2);
 
         assert_eq!(res, Response::Store(parser::StoreResponse::Stored));
 
         let entry = client.get(key.clone());
-        assert_eq!(entry, Entry::new("hello".into(), "hello world".into(), 11));
+        assert_eq!(
+            entry,
+            Entry::default_new("hello".into(), "hello world".into(), 11)
+        );
     }
 
     #[test]
@@ -100,14 +109,14 @@ mod tests {
         let key = "key1".to_string();
         let value = "value1".to_string();
         let len: u32 = value.len() as u32;
-        let entry = Entry::new(key.clone(), value, len);
+        let entry = Entry::default_new(key.clone(), value, len);
 
         client.set(entry.clone());
 
         let res = client.get(key.clone());
         assert_eq!(res, entry);
 
-        let new_entry = Entry::new(key.clone(), "value replaced".into(), 14);
+        let new_entry = Entry::default_new(key.clone(), "value replaced".into(), 14);
         client.replace(new_entry.clone());
 
         let res = client.get(key);
