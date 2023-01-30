@@ -29,7 +29,8 @@ impl Request {
                 if req.len() != 2 {
                     panic!("invalid cmd")
                 }
-                return Request::Delete(req[1].to_string());
+                let key = req[1].replace("\r\n", "");
+                return Request::Delete(key);
             }
         }
         let cmd = s
