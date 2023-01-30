@@ -2,7 +2,7 @@ from pymemcache.client.base import Client
 
 
 def main():
-    client = Client("localhost:9889")
+    client = Client("127.0.0.1:9889")
     key, val = "test_key", "test_val"
     res = client.set(key, val, noreply=False)
     assert res is True
