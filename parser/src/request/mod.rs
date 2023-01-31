@@ -1,8 +1,5 @@
-use crate::Entry;
-const STORE_COMMANDS: [&str; 5] = ["set", "add", "replace", "append", "prepend"];
-const RETRIEVE_COMMANDS: [&str; 2] = ["get", "gets"];
-const DELETE_COMMAND: &str = "delete";
-const FLUSH_COMMAND: &str = "flush_all";
+pub mod store;
+pub use store::*;
 
 #[derive(Debug)]
 pub enum Request {
@@ -56,56 +53,15 @@ impl Request {
 }
 
 #[derive(Debug)]
-pub enum StoreRequest {
-    Set(Entry),
-    Add(Entry),
-    Replace(Entry),
-    Append(Entry),
-    Prepend(Entry),
-}
-
-#[derive(Debug)]
 pub enum RetrieveRequest {
     Get(String),
-    Gets(String),
-}
-
-impl StoreRequest {
-    fn get_cmd_from_str(s: &str) -> fn(Entry) -> StoreRequest {
-        let k = match s {
-            "set" => StoreRequest::Set,
-            "add" => StoreRequest::Add,
-            "replace" => StoreRequest::Replace,
-            "append" => StoreRequest::Append,
-            "prepend" => StoreRequest::Prepend,
-            _ => panic!("invalid"),
-        };
-        return k;
-    }
-    fn from_str(s: &str) -> StoreRequest {
-        let idx = s.find(" ").unwrap();
-        let cmd = &s[..idx];
-        let entry_string = &s[idx + 1..];
-        let request = Self::get_cmd_from_str(cmd);
-        let entry = Entry::from_req_str(entry_string);
-        return request(entry);
-    }
-    fn to_string(&self) -> String {
-        match self {
-            StoreRequest::Set(e) => format!("set {}", e.to_req_str()),
-            StoreRequest::Add(e) => format!("add {}", e.to_req_str()),
-            StoreRequest::Replace(e) => format!("replace {}", e.to_req_str()),
-            StoreRequest::Append(e) => format!("append {}", e.to_req_str()),
-            StoreRequest::Prepend(e) => format!("prepend {}", e.to_req_str()),
-        }
-    }
+    // Gets(String),
 }
 
 impl RetrieveRequest {
     fn get_cmd_from_str(s: &str) -> fn(String) -> RetrieveRequest {
         let k = match s {
             "get" => RetrieveRequest::Get,
-            "gets" => RetrieveRequest::Gets,
             _ => panic!("invalid"),
         };
         return k;
@@ -124,7 +80,6 @@ impl RetrieveRequest {
     fn to_string(&self) -> String {
         match self {
             RetrieveRequest::Get(key) => format!("get {}\r\n", key),
-            RetrieveRequest::Gets(_) => todo!(),
         }
     }
 }

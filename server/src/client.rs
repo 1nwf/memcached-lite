@@ -6,7 +6,9 @@ use std::{
     sync::{Arc, Mutex, MutexGuard},
 };
 
-use parser::{Entry, Request, Response, RetrieveRequest, StoreRequest, StoreResponse};
+use parser::{
+    DeleteResponse, Entry, Request, Response, RetrieveRequest, StoreRequest, StoreResponse,
+};
 
 pub struct Client {
     socket: TcpStream,
@@ -31,40 +33,45 @@ impl Client {
     fn get_store(&self) -> MutexGuard<HashMap<String, Entry>> {
         self.store.lock().unwrap()
     }
-    pub fn set(&mut self, data: Entry) {
+    pub fn set(&mut self, data: Entry) -> StoreResponse {
         let key = data.key.clone();
         self.get_store().insert(key, data);
+        StoreResponse::Stored
     }
-    pub fn update_value<F>(&mut self, key: &String, f: F)
+    pub fn update_value<F>(&mut self, key: &String, f: F) -> StoreResponse
     where
         F: FnOnce(&mut Entry),
     {
         if let Some(e) = self.get_store().get_mut(key) {
             f(e);
+            return StoreResponse::Stored;
         };
+        StoreResponse::NotStored
     }
 
-    pub fn add(&mut self, data: Entry) {
+    pub fn add(&mut self, data: Entry) -> StoreResponse {
         if !self.get_store().contains_key(&data.key) {
             self.set(data);
-        };
+            return StoreResponse::Stored;
+        }
+        StoreResponse::NotStored
     }
 
-    pub fn replace(&mut self, data: Entry) {
-        self.update_value(&data.key, |e: &mut Entry| {
+    pub fn replace(&mut self, data: Entry) -> StoreResponse {
+        return self.update_value(&data.key, |e: &mut Entry| {
             e.replace(&data);
         });
     }
 
-    pub fn append(&mut self, data: Entry) {
+    pub fn append(&mut self, data: Entry) -> StoreResponse {
         self.update_value(&data.key, |e: &mut Entry| {
             e.append(&data);
-        });
+        })
     }
-    pub fn prepend(&mut self, data: Entry) {
+    pub fn prepend(&mut self, data: Entry) -> StoreResponse {
         self.update_value(&data.key, |e: &mut Entry| {
             e.prepend(&data);
-        });
+        })
     }
 
     pub fn get(&self, key: &String) -> Option<Entry> {
@@ -105,9 +112,7 @@ impl Client {
             StoreRequest::Replace(e) => self.replace(e),
             StoreRequest::Append(e) => self.append(e),
             StoreRequest::Prepend(e) => self.prepend(e),
-        };
-        println!("store: {:?}", self.get_store());
-        return StoreResponse::Stored;
+        }
     }
     fn handle_retrieve(&self, req: RetrieveRequest) -> Response {
         match req {
@@ -115,20 +120,21 @@ impl Client {
                 if let Some(value) = self.get(&key) {
                     Response::Retrieve(value)
                 } else {
-                    Response::Error
+                    Response::End
                 }
             }
-            RetrieveRequest::Gets(_) => todo!(),
         }
     }
     fn handle_flush_all(&mut self) -> Response {
         self.get_store().clear();
-        return Response::End;
+        return Response::Ok;
     }
 
     fn handle_delete(&mut self, key: String) -> Response {
         let mut store = self.get_store();
-        store.remove(&key).unwrap();
-        return Response::End;
+        if let Some(_) = store.remove(&key) {
+            return Response::Delete(DeleteResponse::Deleted);
+        }
+        return Response::Delete(DeleteResponse::NotFound);
     }
 }

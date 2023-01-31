@@ -9,6 +9,10 @@ def main():
     res = client.get(key)
     print(f"{key}: {res}")
     assert res == bytes(val, "ascii")
+    res = client.delete(key, noreply=False)
+    assert res is True
+    res = client.delete("invalid_key", noreply=False)
+    assert res is False
 
 
 if __name__ == "__main__":

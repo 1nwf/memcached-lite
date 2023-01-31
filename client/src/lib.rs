@@ -29,13 +29,13 @@ impl Client {
             let n_read = self.conn.read(&mut buf).unwrap();
             if n_read == 0 {
                 panic!("");
-            } else if &buf[n_read - 5..n_read] == Response::End.to_string().as_bytes() {
+            } else if &buf[n_read - 5..n_read] == b"END\r\n" {
                 n = n_read;
                 break;
             }
         }
         let response_str = std::str::from_utf8(&buf[..n - 5]).unwrap();
-        return Response::from_string(response_str);
+        response_str.parse::<Response>().unwrap()
     }
     pub fn get(&mut self, key: String) -> Entry {
         let cmd = RetrieveRequest::Get(key);

@@ -1,4 +1,5 @@
 #![allow(dead_code)]
+mod deserializer;
 mod request;
 mod response;
 pub use request::*;
@@ -86,13 +87,6 @@ impl Entry {
             let value = value[..size as usize].to_string();
             return Entry::new(key.to_string(), flags, 0, value, size);
         }
-
-        // let (key, flags, exptime, size) = (v[0], v[1], v[2], v[3]);
-        // let flags = flags.parse::<u32>().unwrap();
-        // let exptime = exptime.parse::<u32>().unwrap();
-        // let size = size.parse::<u32>().unwrap();
-        // let value = value[..size as usize].to_string();
-        // return Entry::new(key.to_string(), flags, exptime, value, size);
     }
 
     pub fn append(&mut self, e: &Entry) {
