@@ -1,26 +1,36 @@
+use std::cell::RefCell;
+
 pub struct Deserializer<'a> {
-    pub input: &'a str,
+    pub input: RefCell<&'a str>, // TODO:  use cell?
 }
 
 impl<'a> Deserializer<'a> {
     pub fn from_str(input: &'a str) -> Self {
-        Deserializer { input }
+        Deserializer {
+            input: RefCell::new(input),
+        }
     }
 
     pub fn is_empty(&self) -> bool {
-        return self.input.is_empty();
+        return self.input.borrow().is_empty();
     }
-    pub fn next_line(&mut self) -> Result<&str, &str> {
-        let idx = self.input.find("\r\n");
+    pub fn next_line(&self) -> Result<&str, &str> {
+        let mut input = self.input.borrow_mut();
+        let idx = input.find("\r\n");
         if let Some(idx) = idx {
-            let line = &self.input[..idx];
-            self.input = &self.input[idx + 2..];
+            let line = &input[..idx];
+            *input = &input[idx + 2..];
             return Ok(line);
         }
         return Err("invalid input");
     }
 
     pub fn words(&self) -> Vec<&str> {
-        return self.input.split(' ').filter(|e| !e.is_empty()).collect();
+        return self
+            .input
+            .borrow()
+            .split(' ')
+            .filter(|e| !e.is_empty())
+            .collect();
     }
 }

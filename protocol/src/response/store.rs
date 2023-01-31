@@ -18,8 +18,11 @@ impl FromStr for StoreResponse {
     type Err = String;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let mut d = Deserializer::from_str(s);
-        let line = d.next_line()?.clone();
+        let d = Deserializer::from_str(s);
+        let line = d.next_line()?;
+        if !d.is_empty() {
+            return Err("invalid response".into());
+        }
         match line {
             STORED => Ok(StoreResponse::Stored),
             NOT_STORED => Ok(StoreResponse::NotStored),

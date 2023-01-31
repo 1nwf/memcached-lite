@@ -33,8 +33,11 @@ impl FromStr for MemcachedError {
         if s.is_empty() {
             return Err("unable to parse string".into());
         }
-        let mut d = Deserializer::from_str(s);
+        let d = Deserializer::from_str(s);
         let line = d.next_line()?;
+        if d.is_empty() {
+            return Err("unable to parse string".into());
+        }
         match line {
             ERROR => Ok(MemcachedError::Error),
             CLIENT_ERROR => Ok(MemcachedError::ClientError),
