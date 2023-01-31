@@ -10,14 +10,25 @@ use parser::{
     DeleteResponse, Entry, Request, Response, RetrieveRequest, StoreRequest, StoreResponse,
 };
 
+use crate::data_file::Data;
+
 pub struct Client {
     socket: TcpStream,
     store: Arc<Mutex<HashMap<String, Entry>>>,
+    store_file: Arc<Mutex<Data>>,
 }
 
 impl Client {
-    pub fn new(socket: TcpStream, store: Arc<Mutex<HashMap<String, Entry>>>) -> Self {
-        Self { socket, store }
+    pub fn new(
+        socket: TcpStream,
+        store: Arc<Mutex<HashMap<String, Entry>>>,
+        store_file: Arc<Mutex<Data>>,
+    ) -> Self {
+        Self {
+            socket,
+            store,
+            store_file,
+        }
     }
 
     pub fn read<'a>(&mut self, buf: &'a mut [u8]) -> Option<&'a str> {
@@ -35,7 +46,8 @@ impl Client {
     }
     pub fn set(&mut self, data: Entry) -> StoreResponse {
         let key = data.key.clone();
-        self.get_store().insert(key, data);
+        self.get_store().insert(key, data.clone());
+        self.store_file.lock().unwrap().write_data(&data);
         StoreResponse::Stored
     }
     pub fn update_value<F>(&mut self, key: &String, f: F) -> StoreResponse
@@ -44,6 +56,7 @@ impl Client {
     {
         if let Some(e) = self.get_store().get_mut(key) {
             f(e);
+            self.store_file.lock().unwrap().write_data(&e);
             return StoreResponse::Stored;
         };
         StoreResponse::NotStored
@@ -51,7 +64,8 @@ impl Client {
 
     pub fn add(&mut self, data: Entry) -> StoreResponse {
         if !self.get_store().contains_key(&data.key) {
-            self.set(data);
+            self.set(data.clone());
+            self.store_file.lock().unwrap().write_data(&data);
             return StoreResponse::Stored;
         }
         StoreResponse::NotStored
@@ -106,13 +120,14 @@ impl Client {
     }
 
     fn handle_store(&mut self, req: StoreRequest) -> StoreResponse {
-        match req {
+        let store_response = match req {
             StoreRequest::Set(e) => self.set(e),
             StoreRequest::Add(e) => self.add(e),
             StoreRequest::Replace(e) => self.replace(e),
             StoreRequest::Append(e) => self.append(e),
             StoreRequest::Prepend(e) => self.prepend(e),
-        }
+        };
+        return store_response;
     }
     fn handle_retrieve(&self, req: RetrieveRequest) -> Response {
         match req {

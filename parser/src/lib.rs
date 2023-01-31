@@ -2,8 +2,11 @@
 mod deserializer;
 mod request;
 mod response;
+use std::time::Duration;
+
 pub use request::*;
 pub use response::*;
+use time::OffsetDateTime;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Entry {
@@ -15,6 +18,9 @@ pub struct Entry {
 }
 impl Entry {
     pub fn new(key: String, flags: u32, exptime: u32, value: String, len: u32) -> Self {
+        if exptime > 60 * 60 * 24 * 30 {
+            panic!("exptime can't be greater than 30 days");
+        }
         Self {
             key,
             flags,
@@ -24,13 +30,7 @@ impl Entry {
         }
     }
     pub fn default_new(key: String, value: String, len: u32) -> Self {
-        Self {
-            key,
-            flags: 0,
-            exptime: 0,
-            len,
-            value,
-        }
+        Self::new(key, 0, 0, value, len)
     }
     pub fn to_string(&self, exp: bool) -> String {
         let Self {
