@@ -1,9 +1,11 @@
-pub mod error;
-pub mod store;
-use crate::{deserializer::Deserializer, Entry};
-use error::*;
 use std::str::FromStr;
+
+use crate::Entry;
+mod error;
+mod store;
+pub use error::*;
 pub use store::*;
+
 #[derive(Debug, PartialEq, Eq)]
 pub enum Response {
     Store(StoreResponse),
@@ -12,13 +14,6 @@ pub enum Response {
     Ok,
     End,
     Error(MemcachedError),
-    // ServerError,
-    // errors
-    // send not stored error from the error
-    // add to report that these things were implemented
-    // InvalidKey,
-    // CommandError,
-    // ValueError,
 }
 
 #[derive(Debug, PartialEq, Eq)]

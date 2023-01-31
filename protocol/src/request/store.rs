@@ -1,4 +1,4 @@
-use crate::{error::MemcachedError, Entry};
+use crate::{response::MemcachedError, Entry};
 
 pub const STORE_COMMANDS: [&str; 5] = ["set", "add", "replace", "append", "prepend"];
 pub const RETRIEVE_COMMANDS: [&str; 2] = ["get", "gets"];

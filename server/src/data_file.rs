@@ -5,7 +5,7 @@ use std::{
     path::Path,
 };
 
-use parser::Entry;
+use protocol::Entry;
 
 pub struct Data {
     file: File,

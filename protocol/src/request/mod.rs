@@ -1,7 +1,6 @@
-pub mod store;
+use crate::MemcachedError;
+mod store;
 pub use store::*;
-
-use crate::error::MemcachedError;
 
 #[derive(Debug)]
 pub enum Request {

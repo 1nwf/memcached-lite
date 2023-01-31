@@ -6,7 +6,7 @@ use std::{
     sync::{Arc, Mutex, MutexGuard},
 };
 
-use parser::{
+use protocol::{
     DeleteResponse, Entry, Request, Response, RetrieveRequest, StoreRequest, StoreResponse,
 };
 

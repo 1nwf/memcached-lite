@@ -1,5 +1,5 @@
 #![allow(dead_code, unused)]
-use parser::{Entry, Request, Response, RetrieveRequest, StoreRequest};
+use protocol::{Entry, Request, Response, RetrieveRequest, StoreRequest};
 use std::{
     io::{Read, Write},
     net::TcpStream,
@@ -83,12 +83,12 @@ mod tests {
 
         let e = Entry::default_new(key.clone(), value.clone(), len);
         let res = client.set(e);
-        assert_eq!(res, Response::Store(parser::StoreResponse::Stored));
+        assert_eq!(res, Response::Store(protocol::StoreResponse::Stored));
 
         let e2 = Entry::default_new(key.clone(), " world".into(), 6);
         let res = client.append(e2);
 
-        assert_eq!(res, Response::Store(parser::StoreResponse::Stored));
+        assert_eq!(res, Response::Store(protocol::StoreResponse::Stored));
 
         let entry = client.get(key.clone());
         assert_eq!(

@@ -10,7 +10,7 @@ use crate::client::Client;
 mod data_file;
 use data_file::Data;
 use lazy_static::lazy_static;
-use parser::Entry;
+use protocol::Entry;
 
 const DATA_FILENAME: &str = "./data.txt";
 

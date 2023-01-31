@@ -1,12 +1,8 @@
-#![allow(dead_code)]
 mod deserializer;
 mod request;
 mod response;
-use std::time::Duration;
-
 pub use request::*;
 pub use response::*;
-use time::OffsetDateTime;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Entry {
@@ -16,6 +12,7 @@ pub struct Entry {
     pub len: u32,
     pub value: String,
 }
+
 impl Entry {
     pub fn new(key: String, flags: u32, exptime: u32, value: String, len: u32) -> Self {
         if exptime > 60 * 60 * 24 * 30 {
@@ -104,7 +101,8 @@ impl Entry {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    // use super::*;
+
     #[test]
     fn it_works() {}
 }
