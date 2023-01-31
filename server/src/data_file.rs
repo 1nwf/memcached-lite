@@ -31,7 +31,7 @@ impl Data {
         while let Some(line) = iter.next() {
             let next = iter.next().unwrap();
             let value = format!("{}\r\n{}\r\n", line, next);
-            let e = Entry::from_string(&value, false);
+            let e = Entry::from_string(&value, false).unwrap();
             data.insert(e.key.clone(), e);
         }
 

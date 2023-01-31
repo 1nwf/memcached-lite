@@ -1,4 +1,4 @@
-use crate::MemcachedError;
+use crate::{deserializer::Deserializer, Entry, MemcachedError};
 mod store;
 pub use store::*;
 
@@ -18,7 +18,7 @@ impl Request {
             if STORE_COMMANDS.contains(&cmd) {
                 return Ok(Request::Store(StoreRequest::from_str(s)?));
             } else if RETRIEVE_COMMANDS.contains(&cmd) {
-                return Ok(Request::Retreive(RetrieveRequest::from_str(s)));
+                return Ok(Request::Retreive(RetrieveRequest::from_str(s)?));
             } else if cmd == DELETE_COMMAND {
                 let req = s
                     .split(" ")
@@ -60,23 +60,28 @@ pub enum RetrieveRequest {
 }
 
 impl RetrieveRequest {
-    fn get_cmd_from_str(s: &str) -> fn(String) -> RetrieveRequest {
-        let k = match s {
-            "get" => RetrieveRequest::Get,
-            _ => panic!("invalid"),
-        };
-        return k;
-    }
-    fn from_str(s: &str) -> RetrieveRequest {
-        let request = s
-            .split(" ")
-            .filter(|e| !e.is_empty())
-            .map(|e| e.trim())
-            .collect::<Vec<&str>>();
-        if request.len() != 2 {
-            panic!("InvalidRequest")
+    fn get_cmd_from_str(s: &str) -> Result<fn(String) -> RetrieveRequest, MemcachedError> {
+        match s {
+            "get" => Ok(RetrieveRequest::Get),
+            _ => Err(MemcachedError::Error),
         }
-        return Self::get_cmd_from_str(request[0])(request[1].to_string());
+    }
+    fn from_str(s: &str) -> Result<RetrieveRequest, MemcachedError> {
+        let d = Deserializer::from_str(s);
+        let line = d.next_line();
+        if let Ok(line) = line {
+            let req = Deserializer::split_words(line);
+            if !d.is_empty() || req.len() != 2 {
+                return Err(MemcachedError::ClientError);
+            }
+            let cmd = Self::get_cmd_from_str(req[0])?;
+            let key = req[1];
+            if !Entry::is_valid_key(key) {
+                return Err(MemcachedError::Error);
+            }
+            return Ok(cmd(req[1].to_string()));
+        }
+        return Err(MemcachedError::ClientError);
     }
     fn to_string(&self) -> String {
         match self {

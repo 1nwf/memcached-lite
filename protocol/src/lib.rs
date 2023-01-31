@@ -1,6 +1,7 @@
 mod deserializer;
 mod request;
 mod response;
+use deserializer::Deserializer;
 pub use request::*;
 pub use response::*;
 
@@ -52,37 +53,48 @@ impl Entry {
     }
 
     pub fn from_res_str(s: &str) -> Self {
-        return Self::from_string(s, false);
+        return Self::from_string(s, false).unwrap();
     }
 
-    pub fn from_req_str(s: &str) -> Self {
+    pub fn from_req_str(s: &str) -> Result<Self, MemcachedError> {
         return Self::from_string(s, true);
     }
-    pub fn from_string(s: &str, exp: bool) -> Self {
-        let idx = s.find("\r\n").unwrap();
-        let v = &s[..idx]
-            .split(" ")
-            .filter(|e| !e.is_empty())
-            .map(|e| e.trim())
-            .collect::<Vec<&str>>();
+    pub fn is_valid_key(key: &str) -> bool {
+        for char in key.chars() {
+            if char.is_ascii_control() {
+                return false;
+            }
+        }
+        return true;
+    }
+    pub fn from_string(s: &str, exp: bool) -> Result<Self, MemcachedError> {
+        let d = Deserializer::from_str(s);
+        let line = d.next_line();
+        if let Err(_) = line {
+            return Err(MemcachedError::ClientError);
+        }
+        let v = Deserializer::split_words(line.unwrap());
+        let value = d.get_input();
         if (exp && v.len() != 4) || (!exp && v.len() != 3) {
             panic!("invalid entry");
         }
-
-        let value = &s[idx + 2..];
+        let key = v[0];
+        if !Self::is_valid_key(key) {
+            return Err(MemcachedError::Error);
+        }
         if exp {
-            let (key, flags, exptime, size) = (v[0], v[1], v[2], v[3]);
+            let (flags, exptime, size) = (v[1], v[2], v[3]);
             let flags = flags.parse::<u32>().unwrap();
             let exptime = exptime.parse::<u32>().unwrap();
             let size = size.parse::<u32>().unwrap();
             let value = value[..size as usize].to_string();
-            return Entry::new(key.to_string(), flags, exptime, value, size);
+            return Ok(Entry::new(key.to_string(), flags, exptime, value, size));
         } else {
-            let (key, flags, size) = (v[0], v[1], v[2]);
+            let (flags, size) = (v[1], v[2]);
             let flags = flags.parse::<u32>().unwrap();
             let size = size.parse::<u32>().unwrap();
             let value = value[..size as usize].to_string();
-            return Entry::new(key.to_string(), flags, 0, value, size);
+            return Ok(Entry::new(key.to_string(), flags, 0, value, size));
         }
     }
 

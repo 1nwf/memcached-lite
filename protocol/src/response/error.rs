@@ -35,7 +35,7 @@ impl FromStr for MemcachedError {
         }
         let d = Deserializer::from_str(s);
         let line = d.next_line()?;
-        if d.is_empty() {
+        if !d.is_empty() {
             return Err("unable to parse string".into());
         }
         match line {

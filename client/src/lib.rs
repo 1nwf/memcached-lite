@@ -1,5 +1,5 @@
 #![allow(dead_code, unused)]
-use protocol::{Entry, Request, Response, RetrieveRequest, StoreRequest};
+use protocol::{Entry, MemcachedError, Request, Response, RetrieveRequest, StoreRequest};
 use std::{
     io::{Read, Write},
     net::TcpStream,
@@ -37,13 +37,15 @@ impl Client {
         let response_str = std::str::from_utf8(&buf[..n - 5]).unwrap();
         response_str.parse::<Response>().unwrap()
     }
-    pub fn get(&mut self, key: String) -> Entry {
+    pub fn get(&mut self, key: String) -> Result<Entry, MemcachedError> {
         let cmd = RetrieveRequest::Get(key);
         let request = Request::Retreive(cmd);
-        if let Response::Retrieve(entry) = self.send(request) {
-            return entry;
-        };
-        panic!("invalid response");
+        let response = self.send(request);
+        match response {
+            Response::Retrieve(e) => Ok(e),
+            Response::Error(e) => Err(e),
+            _ => panic!("invalid response"),
+        }
     }
     pub fn set(&mut self, entry: Entry) -> Response {
         let cmd = StoreRequest::Set(entry);
@@ -90,7 +92,7 @@ mod tests {
 
         assert_eq!(res, Response::Store(protocol::StoreResponse::Stored));
 
-        let entry = client.get(key.clone());
+        let entry = client.get(key.clone()).unwrap();
         assert_eq!(
             entry,
             Entry::default_new("hello".into(), "hello world".into(), 11)
@@ -110,16 +112,14 @@ mod tests {
         let value = "value1".to_string();
         let len: u32 = value.len() as u32;
         let entry = Entry::default_new(key.clone(), value, len);
-
         client.set(entry.clone());
-
-        let res = client.get(key.clone());
+        let res = client.get(key.clone()).unwrap();
         assert_eq!(res, entry);
 
         let new_entry = Entry::default_new(key.clone(), "value replaced".into(), 14);
         client.replace(new_entry.clone());
 
-        let res = client.get(key);
+        let res = client.get(key).unwrap();
         assert_eq!(res, new_entry);
     }
 
@@ -128,4 +128,24 @@ mod tests {
 
     #[test]
     fn flush_all() {}
+
+    #[test]
+    fn invalid_key() {
+        let mut client = Client::new("localhost:9889");
+        let key = "key1\n".to_string();
+        let value = "value1".to_string();
+        let len: u32 = value.len() as u32;
+        let entry = Entry::default_new(key.clone(), value, len);
+        let res = client.set(entry.clone());
+        assert_eq!(res, Response::Error(MemcachedError::Error));
+
+        // let res = client.get(key.clone()).unwrap();
+        // assert_eq!(res, entry);
+
+        // let new_entry = Entry::default_new(key.clone(), "value replaced".into(), 14);
+        // client.replace(new_entry.clone());
+
+        // let res = client.get(key).unwrap();
+        // assert_eq!(res, new_entry);
+    }
 }

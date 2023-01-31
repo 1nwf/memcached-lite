@@ -11,6 +11,9 @@ impl<'a> Deserializer<'a> {
         }
     }
 
+    pub fn get_input(&self) -> &str {
+        return &self.input.borrow();
+    }
     pub fn is_empty(&self) -> bool {
         return self.input.borrow().is_empty();
     }
@@ -32,5 +35,8 @@ impl<'a> Deserializer<'a> {
             .split(' ')
             .filter(|e| !e.is_empty())
             .collect();
+    }
+    pub fn split_words(s: &str) -> Vec<&str> {
+        return s.split(' ').filter(|e| !e.is_empty()).collect();
     }
 }

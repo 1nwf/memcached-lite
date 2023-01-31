@@ -3,6 +3,7 @@ use std::str::FromStr;
 use crate::Entry;
 mod error;
 mod store;
+use crate::deserializer::Deserializer;
 pub use error::*;
 pub use store::*;
 
@@ -48,24 +49,23 @@ impl Response {
 }
 
 impl FromStr for Response {
-    type Err = ();
+    type Err = String;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if s.split(" ").collect::<Vec<&str>>().len() == 1 {
-            if &s[s.len() - 2..] != "\r\n" {
-                return Err(());
-            };
-            match &s[..s.len() - 2] {
+        let d = Deserializer::from_str(s);
+        let line = d.next_line()?;
+        if d.is_empty() {
+            match line {
                 // "END" => Self::End,
                 "CLIENT_ERROR" => Ok(Self::Error(MemcachedError::ClientError)),
                 "SERVER_ERROR" => Ok(Self::Error(MemcachedError::ServerError)),
                 "ERROR" => Ok(Self::Error(MemcachedError::Error)),
-                _ => Ok(Self::Store(StoreResponse::from_str(s).unwrap())),
+                _ => Ok(Self::Store(StoreResponse::from_str(s)?)),
             }
         } else {
             let idx = s.find(" ").unwrap();
             if !(&s[..idx] == "VALUE") {
-                return Err(());
+                return Err("invalid response".into());
             }
             return Ok(Self::Retrieve(Entry::from_res_str(&s[idx + 1..])));
         }

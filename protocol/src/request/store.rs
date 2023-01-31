@@ -31,7 +31,7 @@ impl StoreRequest {
         let entry_string = &s[idx + 1..];
         let request = Self::get_cmd_from_str(cmd);
         if let Some(request) = request {
-            let entry = Entry::from_req_str(entry_string);
+            let entry = Entry::from_req_str(entry_string)?;
             return Ok(request(entry));
         }
         return Err(MemcachedError::ClientError);
