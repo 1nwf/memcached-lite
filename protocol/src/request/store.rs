@@ -1,4 +1,4 @@
-use crate::{response::MemcachedError, Entry};
+use crate::{deserializer::Deserializer, response::MemcachedError, Entry};
 
 pub const STORE_COMMANDS: [&str; 5] = ["set", "add", "replace", "append", "prepend"];
 pub const RETRIEVE_COMMANDS: [&str; 2] = ["get", "gets"];
@@ -26,13 +26,15 @@ impl StoreRequest {
         }
     }
     pub fn from_str(s: &str) -> Result<StoreRequest, MemcachedError> {
-        let idx = s.find(" ").unwrap();
-        let cmd = &s[..idx];
-        let entry_string = &s[idx + 1..];
-        let request = Self::get_cmd_from_str(cmd);
-        if let Some(request) = request {
-            let entry = Entry::from_req_str(entry_string)?;
-            return Ok(request(entry));
+        let d = Deserializer::from_str(s);
+        let cmd = d.next_word();
+        if let Some(cmd) = cmd {
+            let cmd = Self::get_cmd_from_str(cmd);
+            if let Some(cmd) = cmd {
+                let entry = Entry::from_req_str(d.get_input())?;
+                return Ok(cmd(entry));
+            }
+            return Err(MemcachedError::Error);
         }
         return Err(MemcachedError::ClientError);
     }

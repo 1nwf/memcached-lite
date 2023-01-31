@@ -12,36 +12,31 @@ pub enum Request {
 
 impl Request {
     pub fn from_str(s: &str) -> Result<Self, MemcachedError> {
-        let idx = s.find(" ");
-        if let Some(idx) = idx {
-            let cmd = &s[..idx];
-            if STORE_COMMANDS.contains(&cmd) {
+        let d = Deserializer::from_str(s);
+        let line = d.next_line();
+        if let Ok(line) = line {
+            let words = Deserializer::split_words(line);
+            // request is one line (GET, DELETE, FLUSH)
+            if d.is_empty() {
+                let cmd = words[0];
+                if RETRIEVE_COMMANDS.contains(&cmd) {
+                    return Ok(Request::Retreive(RetrieveRequest::from_str(s)?));
+                } else if cmd == DELETE_COMMAND {
+                    if words.len() == 2 {
+                        return Ok(Request::Delete(words[1].to_string()));
+                    }
+                } else if cmd == FLUSH_COMMAND {
+                    if words.len() == 1 {
+                        return Ok(Request::FlushAll);
+                    }
+                };
+                return Err(MemcachedError::ClientError);
+            } else {
                 return Ok(Request::Store(StoreRequest::from_str(s)?));
-            } else if RETRIEVE_COMMANDS.contains(&cmd) {
-                return Ok(Request::Retreive(RetrieveRequest::from_str(s)?));
-            } else if cmd == DELETE_COMMAND {
-                let req = s
-                    .split(" ")
-                    .filter(|e| !e.is_empty())
-                    .collect::<Vec<&str>>();
-                if req.len() != 2 {
-                    return Err(MemcachedError::Error);
-                }
-                let key = req[1].replace("\r\n", "");
-                return Ok(Request::Delete(key));
             }
+        } else {
+            return Err(MemcachedError::ClientError);
         }
-        let cmd = s
-            .split(' ')
-            .filter(|e| !e.is_empty())
-            .collect::<Vec<&str>>();
-        if cmd.len() <= 2 && cmd[0] == FLUSH_COMMAND && cmd[1] == "\r\n"
-            || cmd[0] == (FLUSH_COMMAND.to_owned() + "\r\n")
-        {
-            return Ok(Request::FlushAll);
-        }
-
-        panic!("invalid command");
     }
     pub fn to_string(&self) -> String {
         match self {
