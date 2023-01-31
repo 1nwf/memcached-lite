@@ -102,8 +102,13 @@ impl Client {
             let mut buf = [0u8; 512];
             if let Some(input) = self.read(&mut buf) {
                 let request = Request::from_str(input);
-                println!("request: {:?}", request);
-                let response = self.handle_request(request);
+                let response;
+                if let Ok(request) = request {
+                    println!("request: {:?}", request);
+                    response = self.handle_request(request);
+                } else {
+                    response = Response::Error(request.err().unwrap());
+                }
                 self.socket.write(response.to_string().as_bytes()).unwrap();
             } else {
                 return;
