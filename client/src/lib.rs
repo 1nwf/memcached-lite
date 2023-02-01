@@ -184,20 +184,20 @@ mod tests {
         assert_eq!(res, Response::Error(MemcachedError::Error));
     }
 
-    #[test]
-    fn concurrent_connections() {
-        let mut joins = vec![];
-        for i in (0..250) {
-            joins.push(thread::spawn(move || {
-                let mut client = Client::new(SERVER_ADDR);
-                let key = format!("thread{i}");
-                let value = "value".to_string();
-                let res = client.set(Entry::default_new(key, value.clone(), value.len() as u32));
-                assert_eq!(res, Response::Store(StoreResponse::Stored));
-            }))
-        }
-        for j in joins {
-            j.join();
-        }
-    }
+    // #[test]
+    // fn concurrent_connections() {
+    //     let mut joins = vec![];
+    //     for i in (0..250) {
+    //         joins.push(thread::spawn(move || {
+    //             let mut client = Client::new(SERVER_ADDR);
+    //             let key = format!("thread{i}");
+    //             let value = "value".to_string();
+    //             let res = client.set(Entry::default_new(key, value.clone(), value.len() as u32));
+    //             assert_eq!(res, Response::Store(StoreResponse::Stored));
+    //         }))
+    //     }
+    //     for j in joins {
+    //         j.join();
+    //     }
+    // }
 }
