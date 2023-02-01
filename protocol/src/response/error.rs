@@ -30,19 +30,21 @@ impl FromStr for MemcachedError {
     type Err = String;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if s.is_empty() {
-            return Err("unable to parse string".into());
-        }
         let d = Deserializer::from_str(s);
-        let line = d.next_line()?;
-        if !d.is_empty() {
-            return Err("unable to parse string".into());
+        let line = d.next_line();
+        if let Some(line) = line {
+            if d.is_empty() {
+                let response = match line {
+                    ERROR => Ok(MemcachedError::Error),
+                    CLIENT_ERROR => Ok(MemcachedError::ClientError),
+                    SERVER_ERROR => Ok(MemcachedError::ServerError),
+                    _ => Err(()),
+                };
+                if response.is_ok() {
+                    return Ok(response.unwrap());
+                }
+            }
         }
-        match line {
-            ERROR => Ok(MemcachedError::Error),
-            CLIENT_ERROR => Ok(MemcachedError::ClientError),
-            SERVER_ERROR => Ok(MemcachedError::ServerError),
-            _ => Err("invalid error".into()),
-        }
+        return Err("unable to parse responsne".into());
     }
 }

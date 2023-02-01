@@ -53,7 +53,7 @@ impl FromStr for Response {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let d = Deserializer::from_str(s);
-        let line = d.next_line()?;
+        let line = d.next_line().ok_or("invalid response")?;
         if d.is_empty() {
             match line {
                 // "END" => Self::End,

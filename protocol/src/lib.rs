@@ -9,7 +9,8 @@ pub use response::*;
 pub struct Entry {
     pub key: String,
     pub flags: u32,
-    pub exptime: u32, // can't be longer than 60*60*24*30 seconds (30 days)
+    /// can't be longer than `60*60*24*30` seconds (30 days)
+    pub exptime: u32,
     pub len: u32,
     pub value: String,
 }
@@ -69,14 +70,11 @@ impl Entry {
     }
     pub fn from_string(s: &str, exp: bool) -> Result<Self, MemcachedError> {
         let d = Deserializer::from_str(s);
-        let line = d.next_line();
-        if let Err(_) = line {
-            return Err(MemcachedError::ClientError);
-        }
-        let v = Deserializer::split_words(line.unwrap());
+        let line = d.next_line().ok_or(MemcachedError::ClientError)?;
+        let v = Deserializer::split_words(line);
         let value = d.get_input();
         if (exp && v.len() != 4) || (!exp && v.len() != 3) {
-            panic!("invalid entry");
+            return Err(MemcachedError::ClientError);
         }
         let key = v[0];
         if !Self::is_valid_key(key) {

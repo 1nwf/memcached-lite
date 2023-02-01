@@ -34,15 +34,15 @@ impl<'a> Deserializer<'a> {
         return self.input.borrow().is_empty();
     }
     // TODO: retrun option instead of result
-    pub fn next_line(&self) -> Result<&str, &str> {
+    pub fn next_line(&self) -> Option<&str> {
         let mut input = self.input.borrow_mut();
         let idx = input.find("\r\n");
         if let Some(idx) = idx {
             let line = &input[..idx];
             *input = &input[idx + 2..];
-            return Ok(line);
+            return Some(line);
         }
-        return Err("invalid input");
+        return None;
     }
 
     pub fn words(&self) -> Vec<&str> {
