@@ -77,7 +77,7 @@ impl Entry {
             return Err(MemcachedError::ClientError);
         }
         let key = v[0];
-        if !Self::is_valid_key(key) {
+        if !Self::is_valid_key(key) || key.len() > 250 {
             return Err(MemcachedError::Error);
         }
         if exp {
@@ -86,12 +86,19 @@ impl Entry {
             let exptime = exptime.parse::<u32>().unwrap();
             let size = size.parse::<u32>().unwrap();
             let value = value[..size as usize].to_string();
+            if value.len() > 250 {
+                return Err(MemcachedError::ClientError);
+            }
+
             return Ok(Entry::new(key.to_string(), flags, exptime, value, size));
         } else {
             let (flags, size) = (v[1], v[2]);
             let flags = flags.parse::<u32>().unwrap();
             let size = size.parse::<u32>().unwrap();
             let value = value[..size as usize].to_string();
+            if value.len() > 350 {
+                return Err(MemcachedError::ClientError);
+            }
             return Ok(Entry::new(key.to_string(), flags, 0, value, size));
         }
     }

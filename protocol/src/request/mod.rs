@@ -12,6 +12,7 @@ pub enum Request {
 
 impl Request {
     pub fn from_str(s: &str) -> Result<Self, MemcachedError> {
+        println!("req: {s}");
         let d = Deserializer::from_str(s);
         let line = d.next_line().ok_or(MemcachedError::ClientError)?;
         let words = Deserializer::split_words(line);

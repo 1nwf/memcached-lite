@@ -149,6 +149,7 @@ impl Client {
     }
     fn handle_flush_all(&mut self) -> Response {
         self.get_store().clear();
+        // TODO: clear data file
         return Response::Ok;
     }
 

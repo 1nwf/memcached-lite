@@ -19,8 +19,8 @@ impl MemcachedError {
     pub fn to_string(&self) -> String {
         let s = match self {
             MemcachedError::Error => ERROR,
-            MemcachedError::ClientError => SERVER_ERROR,
-            MemcachedError::ServerError => CLIENT_ERROR,
+            MemcachedError::ClientError => CLIENT_ERROR,
+            MemcachedError::ServerError => SERVER_ERROR,
         };
         return format!("{}\r\n", s);
     }
