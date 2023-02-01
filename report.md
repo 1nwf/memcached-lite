@@ -1,5 +1,14 @@
 # Memcached Report
 
+## Usage
+
+To start the server, run `make run`. To execute the tests, run `make test`. Make
+sure to have the server running before running the tests. Also, to run the
+pymemcache tests, run `python3 pyclient.py`. Before running the pymemcache tests
+run `pip3 install pymemcache`.
+
+---
+
 ## Project Structure
 
 the project is composed of three folders:
@@ -89,7 +98,7 @@ library.
 
 ---
 
-# Questions
+## Questions
 
 ### How many concurrent clients can the server handle?
 
