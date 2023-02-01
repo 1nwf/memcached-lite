@@ -1,6 +1,7 @@
 from pymemcache.client.base import Client
 
-client = Client("127.0.0.1:9889")
+server_addr = "127.0.0.1:9889"
+client = Client(server_addr)
 
 
 def main():
