@@ -103,10 +103,34 @@ mod tests {
     }
 
     #[test]
-    fn append() {}
+    fn append() {
+        let mut client = Client::new(SERVER_ADDR);
+        let key = "append_key".to_string();
+        let value = "first".to_string();
+        let len: u32 = value.len() as u32;
+        let entry = Entry::default_new(key.clone(), value, len);
+        let store_res = client.set(entry.clone());
+        assert_eq!(store_res, Response::Store(StoreResponse::Stored));
+
+        let new_entry = Entry::default_new(key.clone(), "first ".into(), 6);
+        let append_res = client.append(new_entry.clone());
+        assert_eq!(append_res, Response::Store(StoreResponse::Stored));
+    }
 
     #[test]
-    fn prepend() {}
+    fn prepend() {
+        let mut client = Client::new(SERVER_ADDR);
+        let key = "prepend_key".to_string();
+        let value = "second".to_string();
+        let len: u32 = value.len() as u32;
+        let entry = Entry::default_new(key.clone(), value, len);
+        let store_res = client.set(entry.clone());
+        assert_eq!(store_res, Response::Store(StoreResponse::Stored));
+
+        let new_entry = Entry::default_new(key.clone(), "first ".into(), 6);
+        let prepend_res = client.prepend(new_entry.clone());
+        assert_eq!(prepend_res, Response::Store(StoreResponse::Stored));
+    }
 
     #[test]
     fn replace() {

@@ -32,13 +32,15 @@ impl Client {
     }
 
     pub fn read<'a>(&mut self, buf: &'a mut [u8]) -> Option<&'a str> {
-        let n = self.socket.read(buf).unwrap();
-        if n == 0 {
-            return None;
+        let n = self.socket.read(buf);
+        if let Ok(n) = n {
+            if n == 0 {
+                return None;
+            }
+            let decoded_str = std::str::from_utf8(&buf[..n]).unwrap();
+            return Some(decoded_str);
         }
-
-        let decoded_str = std::str::from_utf8(&buf[..n]).unwrap();
-        return Some(decoded_str);
+        return None;
     }
 
     fn get_store(&self) -> MutexGuard<HashMap<String, Entry>> {
