@@ -5,12 +5,14 @@
 the project is composed of three folders:
 
 1. server - the memcached server
+
 2. protocol - the memcached protocol. this involves types for requests and
    responses as well as the parsing logic.
+
 3. client - a client library that is able to communicate with the server. the
    main tests are in this folder
 
-### Protocol
+### **Protocol**
 
 this library includes all the types and parsing logic used in the client library
 and the server. It includes a Deserializer struct that contains helper methods
@@ -54,7 +56,7 @@ to help pass strings. the types that this library defines are:
   - len: u32,
   - value: String,
 
-### Server
+### **Server**
 
 this is the binary executable that listens for incoming requests and sends back
 responses. It first looks for a file named data.txt in the current directory.
@@ -78,7 +80,7 @@ The commands that are supported by the server are:
   - deletes all contents of the hashmap
 - delete
 
-### Client
+### **Client**
 
 this library includes the code to connect to the server and perform the
 supported. It includes a `Client` struct that communicats with the server. Its
@@ -107,6 +109,7 @@ performance as mentioned below.
   process tasks a huge amount of time compared to other tasks that the server
   can execute. By eliminating this step, the server will be able to handle store
   requests faster.
+
 - Another thing that we can do to improve the performance is to not spawn OS
   threads when a new connection is established. We can utilize asynchronous
   non-blocking IO. To do this, we can use an asynchronous runtime and spawn
@@ -115,10 +118,15 @@ performance as mentioned below.
   their low overhead. This is beneficial to our server because it is mostly IO
   bound. The server spends most of its time doing IO tasks than CPU
   computations.
+
 - Handle exptime if it is longer than 30 days. the current memcached protocol
   states that if the number of seconds is greater than 30 days, then exptime is
   interpreted as real unix time instead of as seconds. Currently the server can
   only handle exptime if it is not greater than 30 days.
+
+- Use bufferd writes to the file since we are regularly writing to it. This will
+  prevent us from frequently making a lot of syscalls which currently degrades
+  the performance of the server.
 
 ### Server Limitations
 
