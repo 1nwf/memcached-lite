@@ -60,6 +60,8 @@ impl FromStr for Response {
                 "CLIENT_ERROR" => Ok(Self::Error(MemcachedError::ClientError)),
                 "SERVER_ERROR" => Ok(Self::Error(MemcachedError::ServerError)),
                 "ERROR" => Ok(Self::Error(MemcachedError::Error)),
+                "DELETED" => Ok(Self::Delete(DeleteResponse::Deleted)),
+                "NOT_FOUND" => Ok(Self::Delete(DeleteResponse::NotFound)),
                 _ => Ok(Self::Store(StoreResponse::from_str(s)?)),
             }
         } else {

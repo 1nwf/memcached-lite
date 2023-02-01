@@ -74,11 +74,14 @@ impl Client {
 
 #[cfg(test)]
 mod tests {
+    use protocol::{DeleteResponse, StoreResponse};
+
     use super::*;
+    const SERVER_ADDR: &str = "localhost:9889";
 
     #[test]
     fn set_get() {
-        let mut client = Client::new("localhost:9889");
+        let mut client = Client::new(SERVER_ADDR);
         let key = "hello".to_string();
         let value = "hello".to_string();
         let len = value.len() as u32;
@@ -107,7 +110,7 @@ mod tests {
 
     #[test]
     fn replace() {
-        let mut client = Client::new("localhost:9889");
+        let mut client = Client::new(SERVER_ADDR);
         let key = "key1".to_string();
         let value = "value1".to_string();
         let len: u32 = value.len() as u32;
@@ -124,7 +127,18 @@ mod tests {
     }
 
     #[test]
-    fn delete() {}
+    fn delete() {
+        let mut client = Client::new(SERVER_ADDR);
+        let key = "key_to_delete".to_string();
+        let value = "v1".to_string();
+        let len: u32 = value.len() as u32;
+        let entry = Entry::default_new(key.clone(), value, len);
+        let res = client.set(entry.clone());
+        assert_eq!(res, Response::Store(StoreResponse::Stored));
+
+        let res = client.delete(key.clone());
+        assert_eq!(res, Response::Delete(DeleteResponse::Deleted))
+    }
 
     #[test]
     fn flush_all() {}
@@ -138,14 +152,5 @@ mod tests {
         let entry = Entry::default_new(key.clone(), value, len);
         let res = client.set(entry.clone());
         assert_eq!(res, Response::Error(MemcachedError::Error));
-
-        // let res = client.get(key.clone()).unwrap();
-        // assert_eq!(res, entry);
-
-        // let new_entry = Entry::default_new(key.clone(), "value replaced".into(), 14);
-        // client.replace(new_entry.clone());
-
-        // let res = client.get(key).unwrap();
-        // assert_eq!(res, new_entry);
     }
 }

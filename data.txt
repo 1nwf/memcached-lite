@@ -608,3 +608,129 @@ hello 0 11
 hello world
 key1 0 14
 value replaced
+hello 0 5
+hello
+key1 0 6
+value1
+hello 0 11
+hello world
+key1 0 14
+value replaced
+test_key 0 8
+test_val
+key1 0 6
+value1
+hello 0 5
+hello
+hello 0 11
+hello world
+key1 0 14
+value replaced
+key1 0 6
+value1
+key1 0 14
+value replaced
+hello 0 5
+hello
+hello 0 11
+hello world
+hello 0 5
+hello
+key1 0 6
+value1
+key_to_delete 0 2
+v1
+hello 0 11
+hello world
+key1 0 14
+value replaced
+key_to_delete 0 2
+v1
+hello 0 5
+hello
+key1 0 6
+value1
+hello 0 11
+hello world
+key1 0 14
+value replaced
+key_to_delete 0 2
+v1
+key1 0 6
+value1
+hello 0 5
+hello
+hello 0 11
+hello world
+key1 0 14
+value replaced
+hello 0 5
+hello
+key1 0 6
+value1
+key_to_delete 0 2
+v1
+hello 0 11
+hello world
+key1 0 14
+value replaced
+key_to_delete 0 2
+v1
+key1 0 6
+value1
+key1 0 14
+value replaced
+hello 0 5
+hello
+hello 0 11
+hello world
+key_to_delete 0 2
+v1
+key1 0 6
+value1
+key1 0 14
+value replaced
+hello 0 5
+hello
+hello 0 11
+hello world
+key_to_delete 0 2
+v1
+key1 0 6
+value1
+hello 0 5
+hello
+key1 0 14
+value replaced
+hello 0 11
+hello world
+key_to_delete 0 2
+v1
+hello 0 5
+hello
+key1 0 6
+value1
+hello 0 11
+hello world
+key1 0 14
+value replaced
+key1 0 6
+value1
+key_to_delete 0 2
+v1
+hello 0 5
+hello
+hello 0 11
+hello world
+key1 0 14
+value replaced
+hello 0 5
+hello
+key_to_delete 0 2
+v1
+hello 0 11
+hello world
+key1 0 6
+value1
+key1 0 14
+value replaced
