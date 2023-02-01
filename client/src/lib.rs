@@ -142,14 +142,14 @@ mod tests {
 
     #[test]
     fn flush_all() {
-        let mut client = Client::new("localhost:9889");
+        let mut client = Client::new(SERVER_ADDR);
         let res = client.flush_all();
         assert_eq!(res, Response::Ok);
     }
 
     #[test]
     fn invalid_key() {
-        let mut client = Client::new("localhost:9889");
+        let mut client = Client::new(SERVER_ADDR);
         let key = "key1\n".to_string();
         let value = "value1".to_string();
         let len: u32 = value.len() as u32;
