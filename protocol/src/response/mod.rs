@@ -40,7 +40,7 @@ impl Response {
             Response::Retrieve(e) => format!("VALUE {}", e.to_res_str()),
             Response::Error(e) => e.to_string(),
             Response::Delete(d) => d.to_string(),
-            Response::Ok => format!("DELETE\r\n"),
+            Response::Ok => format!("OK\r\n"),
             Response::End => format!(""),
         };
 
@@ -62,6 +62,7 @@ impl FromStr for Response {
                 "ERROR" => Ok(Self::Error(MemcachedError::Error)),
                 "DELETED" => Ok(Self::Delete(DeleteResponse::Deleted)),
                 "NOT_FOUND" => Ok(Self::Delete(DeleteResponse::NotFound)),
+                "OK" => Ok(Response::Ok),
                 _ => Ok(Self::Store(StoreResponse::from_str(s)?)),
             }
         } else {

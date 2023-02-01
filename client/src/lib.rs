@@ -28,7 +28,7 @@ impl Client {
         loop {
             let n_read = self.conn.read(&mut buf).unwrap();
             if n_read == 0 {
-                panic!("");
+                panic!("read 0 bytes");
             } else if &buf[n_read - 5..n_read] == b"END\r\n" {
                 n = n_read;
                 break;
@@ -141,7 +141,11 @@ mod tests {
     }
 
     #[test]
-    fn flush_all() {}
+    fn flush_all() {
+        let mut client = Client::new("localhost:9889");
+        let res = client.flush_all();
+        assert_eq!(res, Response::Ok);
+    }
 
     #[test]
     fn invalid_key() {
