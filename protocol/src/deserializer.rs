@@ -1,45 +1,43 @@
-use std::cell::RefCell;
+use std::cell::Cell;
 
 pub struct Deserializer<'a> {
-    pub input: RefCell<&'a str>, // TODO:  use cell?
+    pub input: Cell<&'a str>, // TODO:  use cell?
 }
 
 impl<'a> Deserializer<'a> {
     pub fn from_str(input: &'a str) -> Self {
         Deserializer {
-            input: RefCell::new(input),
+            input: Cell::new(input),
         }
     }
 
     pub fn next_word(&self) -> Option<&str> {
-        let mut input = self.input.borrow_mut();
+        let input = self.input.get();
         if input.is_empty() {
             return None;
         }
         let space_idx = input.find(" ");
         if let Some(idx) = space_idx {
-            let s = &input[..idx];
-            *input = &input[idx + 1..];
-            return Some(s);
+            self.input.set(&input[idx + 1..]);
+            return Some(&input[..idx]);
         }
-        let s = *input;
-        *input = "";
-        return Some(s);
+        self.input.set("");
+        return Some(input);
     }
 
     pub fn get_input(&self) -> &str {
-        return &self.input.borrow();
+        return &self.input.get();
     }
     pub fn is_empty(&self) -> bool {
-        return self.input.borrow().is_empty();
+        return self.input.get().is_empty();
     }
-    // TODO: retrun option instead of result
+
     pub fn next_line(&self) -> Option<&str> {
-        let mut input = self.input.borrow_mut();
+        let input = self.input.get();
         let idx = input.find("\r\n");
         if let Some(idx) = idx {
             let line = &input[..idx];
-            *input = &input[idx + 2..];
+            self.input.set(&input[idx + 2..]);
             return Some(line);
         }
         return None;
@@ -48,7 +46,7 @@ impl<'a> Deserializer<'a> {
     pub fn words(&self) -> Vec<&str> {
         return self
             .input
-            .borrow()
+            .get()
             .split(' ')
             .filter(|e| !e.is_empty())
             .collect();
