@@ -1,5 +1,5 @@
 #![allow(dead_code, unused)]
-use protocol::{Entry, MemcachedError, Request, Response, RetrieveRequest, StoreRequest};
+pub use protocol::{Entry, MemcachedError, Request, Response, RetrieveRequest, StoreRequest};
 use std::{
     io::{Read, Write},
     net::TcpStream,
